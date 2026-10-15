@@ -1,0 +1,9 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+@layer base {
+  html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+  body { @apply bg-white font-sans text-ink antialiased; }
+  :focus-visible { outline: 3px solid #315EFB; outline-offset: 2px; border-radius: 6px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+.rise { animation: rise .6s cubic-bezier(.22,.8,.3,1) backwards; animation-delay: calc(var(--i, 0) * 90ms); }

@@ -1,0 +1,8 @@
+// Maps supabase-js's /rest/v1/* paths onto a bare PostgREST server.
+import http from 'node:http';
+http.createServer((req, res) => {
+  const path = req.url.replace(/^\/rest\/v1/, '') || '/';
+  const up = http.request({ host: '127.0.0.1', port: 3001, path, method: req.method, headers: req.headers }, (r) => { res.writeHead(r.statusCode, r.headers); r.pipe(res); });
+  up.on('error', () => { res.writeHead(502); res.end(); });
+  req.pipe(up);
+}).listen(3002, '127.0.0.1');
