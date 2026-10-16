@@ -205,4 +205,22 @@ check('evidence upload is limited to the org folder for a new org', put(E3, 'ver
 r, e = as_user(E3, "select submit_verification_request(%s,'{}'::jsonb,%s)", (org3, [f'{org3}/cac.pdf'])); check('verification request stores the evidence paths', e is None and su("select document_paths from employer_verification_requests where employer_id=%s", (org3,))[0][0] == [f'{org3}/cac.pdf'])
 check('org status becomes pending after submitting', su("select verification_status from employers where id=%s", (org3,))[0][0] == 'pending')
 
+# ── Cover letters ──
+cvA = su("select id from candidate_cvs where user_id=%s limit 1", (A,))[0][0]
+cvB2 = su("select id from candidate_cvs where user_id=%s limit 1", (B,))
+cvB = cvB2[0][0] if cvB2 else None
+letter = str(uuid.uuid4())
+check('candidate can create a letter linked to own CV', as_user(A, "insert into cover_letters (id,user_id,cv_id,title,body,tone) values (%s,%s,%s,'Letter','Dear Sir,','concise')", (letter, A, cvA))[1] is None)
+check("cannot link a letter to someone else's CV", cvB is None or as_user(A, "insert into cover_letters (user_id,cv_id,title,body) values (%s,%s,'x','y')", (A, cvB))[1] is not None)
+check("cannot create a letter for another user", as_user(A, "insert into cover_letters (user_id,title,body) values (%s,'x','y')", (B,))[1] is not None)
+check('unknown tone is rejected', as_user(A, "update cover_letters set tone='angry' where id=%s", (letter,))[1] is not None)
+check('oversized body is rejected', as_user(A, "update cover_letters set body=%s where id=%s", ('x' * 8001, letter))[1] is not None)
+check('empty title is rejected', as_user(A, "update cover_letters set title='' where id=%s", (letter,))[1] is not None)
+check('other candidates cannot read my letter', as_user(B, "select id from cover_letters")[0] == [])
+check('employers cannot read candidate letters', as_user(E1, "select id from cover_letters")[0] == [] and as_user(None, "select id from cover_letters")[0] == [])
+check('cannot re-point my letter at someone else\'s CV', cvB is None or as_user(A, "update cover_letters set cv_id=%s where id=%s", (cvB, letter))[1] is not None)
+r, e = as_user(B, "update cover_letters set title='hijack' where id=%s returning 1", (letter,)); check("other candidate cannot edit my letter", r == [] or e is not None)
+r, e = as_user(B, "delete from cover_letters where id=%s returning 1", (letter,)); check("other candidate cannot delete my letter", r == [] or e is not None)
+check('owner can delete their letter', as_user(A, "delete from cover_letters where id=%s", (letter,))[1] is None and su("select count(*) from cover_letters where id=%s", (letter,))[0][0] == 0)
+
 print(f"\n{passed} passed, {failed} failed"); sys.exit(1 if failed else 0)

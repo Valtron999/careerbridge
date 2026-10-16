@@ -6,8 +6,8 @@ Jobs, student placements (SIWES, IT, SWEP, internships), applications and recrui
 Built and verified so far (see `docs/STATUS.md` for the detail): foundation, auth, database + RLS + transactional RPCs, public marketplace,
 direct/external application flow, candidate dashboard basics, employer workspace and admin moderation screens.
 CV builder with live preview, three templates, section reordering, versions, default CV, PDF export and optional Gemini AI help (summary, bullet polish, skill finder, gap questions, tailor-to-job as a new copy).
-Also done: search by employer, skills and course, file uploads (profile photo, document library, application attachments, employer verification evidence), password reset + update page, candidate profile and student-details editor, 3-step candidate onboarding (resumable), profile completeness.
-**Not built yet:** cover letters, career assistant chat, email sending,
+Also done: cover letters (general or per listing, tone choice, per-paragraph rewrite, copy and PDF), search by employer, skills and course, file uploads (profile photo, document library, application attachments, employer verification evidence), password reset + update page, candidate profile and student-details editor, 3-step candidate onboarding (resumable), profile completeness.
+**Not built yet:** career assistant chat, email sending,
 payments/subscriptions, team management, user/category admin screens, employer marketing + pricing pages, company-profile polish.
 
 ## Setup
@@ -18,7 +18,9 @@ npm run dev
 ```
 0. (Optional AI) Get a free Gemini key at https://aistudio.google.com/apikey, then set `AI_PROVIDER=gemini`, `AI_API_KEY=...`, `AI_MODEL=<a current free-tier model>`. Without these the AI buttons show a clear "not set up" message and the rest of the builder works.
 1. Create a Supabase project. Put the URL and anon key in `.env.local`; put the service-role key in `SUPABASE_SERVICE_ROLE_KEY` (server only).
-2. Apply migrations in order: `supabase/migrations/0001` to `0004` (`supabase db push`, or paste each into the SQL editor).
+2. Apply **all** migrations in order, `supabase/migrations/0001` to `0008` (`supabase db push`, or paste each into the SQL editor). The app will not work with only some of them:
+   - 0001 schema, 0002 security rules and application functions, 0003 reference data, 0004 employer and admin functions,
+   - 0005 default-CV function, 0006 file upload rules, 0007 search (employer, skills, courses), 0008 cover letters.
 3. Auth > URL configuration: set Site URL and add `<site>/auth/callback` as a redirect URL. Keep "Confirm email" ON.
 4. Make the first admin by SQL (admins can never be created from the app): `update profiles set role='admin' where email='you@example.com';`
 5. Deploy: import the repo in Vercel, add the same environment variables, deploy.

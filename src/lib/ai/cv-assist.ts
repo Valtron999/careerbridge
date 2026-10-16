@@ -7,7 +7,7 @@ export type CvAction = (typeof ACTIONS)[number];
 export const BULLET_SECTIONS = ['experience', 'internships', 'leadership', 'projects'] as const;
 type BulletSection = (typeof BULLET_SECTIONS)[number];
 
-const SYSTEM = `You help people write honest CVs, including Nigerian students with little or no work experience.
+export const SYSTEM = `You help people write honest CVs, including Nigerian students with little or no work experience.
 Rules you must always follow:
 - Use ONLY facts present in the CV data provided. Never invent degrees, employers, dates, certifications, skills, achievements, references or numbers.
 - If a number, result or detail would strengthen a line but is not provided, write a short bracketed placeholder such as [add number] instead of guessing.

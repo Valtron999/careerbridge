@@ -1,5 +1,5 @@
 # Status (verified commands)
-- `tsc --noEmit`: clean. `vitest`: 59 passed. `tests/rls_harness.py`: 119 passed (SQL harness); integration: 33 passed, 0 failed (embedded Postgres, stubbed Supabase schemas).
+- `tsc --noEmit`: clean. `vitest`: 72 passed. `tests/rls_harness.py`: 131 passed (SQL harness); integration: 34 passed, 0 failed (embedded Postgres, stubbed Supabase schemas).
 - `next build`: compiles (Google Fonts download is skipped offline; fonts load from Google in the browser).
 - Not run: live Supabase project, Vercel deploy, browser/E2E tests, accessibility audit, responsive review of the Next.js pages.
 
@@ -31,3 +31,10 @@ Migration 0007: employer/skills/category/courses are searchable, relevance ranki
 Diagnosis: started the production build and requested 26 routes; built a real Postgres + PostgREST integration harness (tests/integration) that checks every select() string and RPC call in the source and the write flows the server actions use.
 Bugs found and fixed: /go and /auth/callback crashed (500) without database config; search keywords over 120 characters crashed /jobs; a latent guard bug blocked non-admin updates to rejected listings.
 Still not verified: Supabase Auth (signup, email links, sessions), real Storage, Gemini, rendering in a browser, mobile layouts.
+
+# Cover letters (added)
+Routes: /dashboard/cover-letters, /new, /[id]; /api/ai/letter; /api/cover-letters/[id]/pdf. Migration 0008. Listing pages link to 'Write a cover letter for this role'.
+Verified: model + assistant unit tests (contact data never sent, job text marked untrusted, invented figures flagged), DB rules (ownership, CV link check, limits), write flows on real PostgREST, PDF text extraction.
+Bug caught by tests: a paragraph starting with 'Hello.' was deleted as if it were a greeting; fixed.
+Docs fix: the README migration range was stale (said 0001-0004); now 0001-0008.
+Not verified: real Gemini output quality, the editor in a browser, mobile layout.

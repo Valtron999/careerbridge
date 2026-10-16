@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
-import { AI_LIMITS, AiError, aiConfigured, getAiProvider } from '@/lib/ai';
+import { AI_LIMITS, aiConfigured, getAiProvider } from '@/lib/ai';
+import { AI_MESSAGES, aiFailure } from '@/lib/ai/messages';
 import { reserveAiUse } from '@/lib/ai/guard';
 import { ACTIONS, BULLET_SECTIONS, runCvAssist } from '@/lib/ai/cv-assist';
 import { cvSchema, normalizeCv, pruneCv, redactForAi } from '@/lib/cv/schema';
@@ -13,20 +14,12 @@ const body = z.object({
   jobDescription: z.string().max(8000).optional(),
   target: z.object({ section: z.enum(BULLET_SECTIONS), index: z.number().int().min(0).max(20) }).optional(),
 });
-const MESSAGES: Record<string, string> = {
-  not_configured: 'AI assistance is not set up on this site. You can keep editing your CV by hand.',
-  rate_limited: 'The AI service is busy right now. Please try again in a minute.',
-  timeout: 'The AI service took too long to respond. Please try again.',
-  bad_output: 'The AI returned something we could not use. Please try again.',
-  provider_rejected: 'The AI service could not process this request. Please try again later.',
-  provider_error: 'The AI service is unavailable right now. You can keep editing your CV by hand.',
-};
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Sign in to use AI assistance.' }, { status: 401 });
   if (session.profile.role !== 'candidate') return NextResponse.json({ error: 'AI CV tools are for candidate accounts.' }, { status: 403 });
-  if (!aiConfigured()) return NextResponse.json({ error: MESSAGES.not_configured, code: 'not_configured' }, { status: 503 });
+  if (!aiConfigured()) return NextResponse.json({ error: AI_MESSAGES.not_configured, code: 'not_configured' }, { status: 503 });
 
   const text = await req.text();
   if (text.length > 80_000) return NextResponse.json({ error: 'That request is too large.' }, { status: 413 });
@@ -45,9 +38,5 @@ export async function POST(req: NextRequest) {
   try {
     const out = await runCvAssist(getAiProvider(), { action: parsed.action, cv, mode: parsed.mode, jobDescription: parsed.jobDescription, target: parsed.target });
     return NextResponse.json(out, { headers: { 'Cache-Control': 'no-store' } });
-  } catch (e) {
-    const code = e instanceof AiError ? e.code : 'provider_error';
-    console.error('cv ai failed', code, e instanceof AiError ? e.message : ''); // codes only: never log CV content or keys
-    return NextResponse.json({ error: MESSAGES[code] ?? MESSAGES.provider_error, code }, { status: code === 'rate_limited' ? 429 : 502 });
-  }
+  } catch (e) { return aiFailure(e, 'cv ai failed'); }
 }

@@ -89,6 +89,7 @@ export async function OpportunityDetail({ slug, path }: { slug: string; path: st
               <button type="submit" className={btn('secondary', 'w-full')}>{saved.has(o.id) ? 'Saved ✓ (remove)' : 'Save for later'}</button></form>
           </div>
           {state === 'open' && session?.profile.role === 'candidate' && <Link href={defaultCvId ? `/dashboard/cvs/${defaultCvId}/edit?job=${o.slug}` : '/dashboard/cvs/new'} className={btn('secondary', 'w-full')}>{defaultCvId ? 'Tailor my CV to this role' : 'Build a CV for this role'}</Link>}
+          {state === 'open' && session?.profile.role === 'candidate' && <Link href={`/dashboard/cover-letters/new?job=${o.slug}`} className={btn('secondary', 'w-full')}>Write a cover letter for this role</Link>}
           <dl className="rounded-xl border border-surface-line px-5 py-3">
             {row('Location', formatLocation(o))}
             {row('Compensation', pay ?? 'Not specified')}

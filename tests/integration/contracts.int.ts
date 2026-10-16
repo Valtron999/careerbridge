@@ -153,3 +153,24 @@ describe('write flows used by the server actions', () => {
     expect(await find('brand new')).toEqual([]);
   });
 });
+
+describe('cover letter flows', () => {
+  it('create, save, duplicate, privacy and limits behave as the actions expect', async () => {
+    const { ids } = await import('./helpers'); const a = as('a'), b = as('b');
+    const cv = (await a.from('candidate_cvs').select('id').limit(1)).data![0]!.id; const opp = ids.opps['direct-job']!;
+    const created = await a.from('cover_letters').insert({ user_id: ids.users.a, opportunity_id: opp, cv_id: cv, title: 'Cover letter: Direct Apply Job', body: 'Dear Hiring Manager,\n\nSincerely,\nAda', tone: 'professional' }).select('id').single();
+    expect(created.error).toBeNull(); const id = created.data!.id;
+    const saved = await a.from('cover_letters').update({ title: 'Edited', body: 'Dear X,\n\nPara.', tone: 'enthusiastic', cv_id: cv, job_context: { title: 'T', employer: 'E', description: 'D' } }).eq('id', id).eq('user_id', ids.users.a).select('id').maybeSingle();
+    expect(saved.error).toBeNull(); expect(saved.data?.id).toBe(id);
+    const src = (await a.from('cover_letters').select('title, body, tone, cv_id, opportunity_id, job_context').eq('id', id).single()).data!;
+    expect((await a.from('cover_letters').insert({ ...src, user_id: ids.users.a, title: `${src.title} (copy)` }).select('id').single()).error).toBeNull();
+    const list = await a.from('cover_letters').select('id, title, tone, updated_at, opportunity:opportunities(title, employer:employers(name))').eq('user_id', ids.users.a); expect(list.data!.length).toBe(2);
+    expect((await b.from('cover_letters').select('id')).data).toEqual([]);
+    expect((await b.from('cover_letters').update({ title: 'x' }).eq('id', id).select('id')).data).toEqual([]);
+    expect((await a.from('cover_letters').update({ body: 'x'.repeat(8001) }).eq('id', id)).error).not.toBeNull();
+    expect((await a.from('cover_letters').update({ tone: 'angry' }).eq('id', id)).error).not.toBeNull();
+    const bCv = (await b.from('candidate_cvs').insert({ user_id: ids.users.b, title: 'b cv', is_default: false, content: {} }).select('id').single()).data!.id;
+    expect((await a.from('cover_letters').update({ cv_id: bCv }).eq('id', id)).error).not.toBeNull();
+    expect((await a.from('cover_letters').delete().eq('id', id)).error).toBeNull();
+  });
+});

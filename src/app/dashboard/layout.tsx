@@ -8,7 +8,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <WorkspaceShell title="Candidate" nav={[
       { href: '/dashboard', label: 'Overview' }, { href: '/placements', label: 'Student Placements' }, { href: '/jobs', label: 'Find Opportunities' },
       { href: '/dashboard/applications', label: 'My Applications' }, { href: '/dashboard/saved', label: 'Saved' }, { href: '/dashboard/notifications', label: 'Notifications' },
-      { href: '/dashboard/cvs', label: 'My CVs' }, { href: '/dashboard/documents', label: 'Documents' }, { href: '#', label: 'Cover Letters', soon: true }, { href: '#', label: 'Career Assistant', soon: true }, { href: '/dashboard/profile', label: 'Profile' }, { href: '/dashboard/settings', label: 'Settings' },
+      { href: '/dashboard/cvs', label: 'My CVs' }, { href: '/dashboard/documents', label: 'Documents' }, { href: '/dashboard/cover-letters', label: 'Cover Letters' }, { href: '#', label: 'Career Assistant', soon: true }, { href: '/dashboard/profile', label: 'Profile' }, { href: '/dashboard/settings', label: 'Settings' },
     ]}>{children}</WorkspaceShell>
   );
 }

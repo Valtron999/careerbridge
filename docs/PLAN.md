@@ -12,7 +12,7 @@
 ## Not built yet
 - Employer onboarding polish (candidate onboarding is done).
 - File uploads are built (see README) but only tested against a stand-in for Supabase storage, not a live project. No antivirus scanning. Uploading a generated CV PDF into the document library is not built.
-- Cover letters and the career assistant chat. (Done: CV builder, 3 templates, PDF export, Gemini AI service, per-user AI quotas. Not tested with a real Gemini key.)
+- Career assistant chat. (Done: CV builder, 3 templates, PDF export, cover letters with tone, per-paragraph rewrite and PDF, Gemini AI service, per-user AI quotas. None of the AI features has been tested with a real Gemini key.)
 - Employer: team management, subscription listing limits, recruitment analytics, rescheduling interviews (cancel + create new works), CV preview beyond the raw snapshot.
 - Admin: user management/suspension, category and settings management, analytics charts.
 - Email sending, notification preferences UI, subscriptions/Paystack/webhooks, cron jobs.
