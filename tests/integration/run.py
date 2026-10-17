@@ -28,11 +28,11 @@ def opp(slug, org, title, desc='A role.', category='full-time', kind='job', stat
     for sk in skill_names: cur.execute("insert into opportunity_skills values (%s,%s)", (oid, skills[sk]))
     opps[slug] = oid
     if visible_ and status == 'published': visible.append(slug)
-opp('data-analyst', org1, 'Data Analyst', 'Prepare weekly reporting dashboards', skill_names=['SQL', 'Excel'], location_city='Lagos', location_state='Lagos', days=1)
+opp('data-analyst', org1, 'Data Analyst', 'Prepare weekly reporting dashboards', skill_names=['SQL', 'Excel'], experience_level='entry', location_city='Lagos', location_state='Lagos', days=1)
 opp('swe-placement', org2, 'Software Engineering Placement', 'Build web features', category='siwes', kind='placement', location_city='Abuja', eligible_courses=['Computer Science', 'Software Engineering'], placement_duration_weeks=24, is_unpaid=True, days=2)
 opp('civil-placement', org1, 'Civil Site Placement', 'Site supervision support', category='siwes', kind='placement', location_city='Port Harcourt', location_state='Rivers', eligible_courses=['Civil Engineering'], placement_duration_weeks=12, salary_min=50000, salary_max=80000, skill_names=['Welding'], days=3)
 opp('office-placement', org2, 'General Office Placement', 'Admin support for all courses', category='swep', kind='placement', location_city='Lagos', location_state='Lagos', placement_duration_weeks=8, days=4)
-opp('remote-support', org1, 'Remote Support Agent', 'Answer customer questions', work_arrangement='remote', days=5)
+opp('remote-support', org1, 'Remote Support Agent', 'Answer customer questions', work_arrangement='remote', experience_level='none', days=5)
 opp('engineer-title', org2, 'Engineer Trainee', 'Learn on the job', category='graduate-trainee', days=6)
 opp('engineer-desc', org2, 'Operations Associate', 'You will work closely with the engineer team and support them daily', days=7)
 opp('external-job', org1, 'External Apply Job', 'Apply on our site', application_method='external', external_url='https://example.com/apply', days=8)
@@ -56,7 +56,9 @@ else: print(open('/tmp/pgrst.err').read()); sys.exit('PostgREST did not start')
 procs.append(subprocess.Popen(['node', 'tests/integration/proxy.mjs']))
 time.sleep(0.5)
 try:
-    rc = subprocess.call(['npx', 'vitest', 'run', '--config', 'vitest.integration.config.mts'], env={**os.environ, 'CB_INT_FILE': cfile, 'CB_REST_URL': 'http://127.0.0.1:3002'})
+    if os.environ.get('SERVE'):
+        print('READY', flush=True); time.sleep(int(os.environ['SERVE'])); rc = 0
+    else: rc = subprocess.call(['npx', 'vitest', 'run', '--config', 'vitest.integration.config.mts'], env={**os.environ, 'CB_INT_FILE': cfile, 'CB_REST_URL': 'http://127.0.0.1:3002'})
 finally:
     for p in procs: p.terminate()
 sys.exit(rc)

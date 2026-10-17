@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { dateRange, safeLink, visibleSections, type Cv, type Entry, type TemplateId } from '@/lib/cv/schema';
 import { STYLE } from '@/lib/cv/style';
 
-const W = 794; // A4 width at 96dpi
+const A4_WIDTH = 794; // A4 width at 96dpi
 /** HTML approximation of the PDF. Same section logic and style table; the downloaded PDF is the authoritative output. */
-export function CvPreview({ cv, template }: { cv: Cv; template: TemplateId }) {
+export function CvPreview({ cv, template, pageWidth = A4_WIDTH, fontScale = 1 }: { cv: Cv; template: TemplateId; pageWidth?: number; fontScale?: number }) {
+  const W = pageWidth; // a narrower page with larger type keeps a small preview readable; the PDF is always A4
   const wrap = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.5);
@@ -19,7 +20,7 @@ export function CvPreview({ cv, template }: { cv: Cv; template: TemplateId }) {
 
   const st = STYLE[template];
   const family = st.serif ? 'Georgia, "Times New Roman", serif' : 'Geist, Helvetica, Arial, sans-serif';
-  const base = st.body * 1.333;
+  const base = st.body * 1.333 * fontScale;
   const accent = template === 'professional' ? '#152238' : cv.accent;
   const heading: React.CSSProperties = { fontWeight: 700, fontSize: base + 1, color: accent, textTransform: st.upper ? 'uppercase' : 'none', letterSpacing: st.upper ? '.08em' : 0, margin: `${st.gap * 1.333}px 0 6px`, paddingBottom: 2,
     ...(st.heading === 'rule' ? { borderBottom: '1px solid #152238' } : st.heading === 'accent-underline' ? { borderBottom: `2px solid ${cv.accent}` } : { borderLeft: `4px solid ${cv.accent}`, paddingLeft: 8 }) };
@@ -33,9 +34,9 @@ export function CvPreview({ cv, template }: { cv: Cv; template: TemplateId }) {
 
   return (
     <div ref={wrap} className="w-full overflow-hidden rounded-lg border border-surface-line bg-slate-100" style={{ height: h * scale + 2 }} aria-label="CV preview">
-      <div ref={page} style={{ width: W, minHeight: 1123, background: '#fff', padding: '48px 56px', transform: `scale(${scale})`, transformOrigin: 'top left', fontFamily: family, fontSize: base, lineHeight: 1.4, color: '#152238' }}>
+      <div ref={page} style={{ width: W, minHeight: pageWidth === A4_WIDTH ? 1123 : 0, background: '#fff', padding: pageWidth === A4_WIDTH ? '48px 56px' : '32px 36px', transform: `scale(${scale})`, transformOrigin: 'top left', fontFamily: family, fontSize: base, lineHeight: 1.4, color: '#152238' }}>
         <header style={{ textAlign: st.headerAlign }}>
-          <div style={{ fontWeight: 700, fontSize: st.nameSize * 1.333, color: accent }}>{cv.personal.full_name || 'Your name'}</div>
+          <div style={{ fontWeight: 700, fontSize: st.nameSize * 1.333 * fontScale, color: accent }}>{cv.personal.full_name || 'Your name'}</div>
           {cv.personal.headline && <div style={{ ...muted, fontSize: base + 2 }}>{cv.personal.headline}</div>}
           <div style={{ ...muted, fontSize: base - 1, marginTop: 4 }}>{[...contact, ...links.map((l) => l.label)].join('  |  ')}</div>
         </header>

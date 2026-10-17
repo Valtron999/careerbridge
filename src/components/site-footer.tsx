@@ -4,7 +4,7 @@ import { brand } from '@/lib/config/brand';
 import { container } from './ui';
 
 const groups = [
-  { title: 'Explore', links: [['/jobs', 'Find Jobs'], ['/placements', 'Student Placements'], ['/jobs?type=internship', 'Internships'], ['/jobs?arrangement=remote', 'Remote Opportunities']] },
+  { title: 'Explore', links: [['/placements?category=siwes', 'SIWES & Industrial Training'], ['/jobs?type=internship', 'Internships'], ['/jobs?type=entry', 'Entry-level Jobs'], ['/jobs', 'Find Jobs'], ['/jobs?arrangement=remote', 'Remote Opportunities']] },
   { title: 'Career Tools', links: [['/cv-builder', 'CV Builder'], ['/dashboard/cover-letters', 'Cover Letter Generator'], ['/career-resources', 'Career Resources']] },
   { title: 'Employers', links: [['/employer/opportunities/new', 'Post an Opportunity'], ['/employer', 'Employer Dashboard'], ['/pricing', 'Pricing'], ['/employer-guidelines', 'Employer Guidelines']] },
   { title: 'Company', links: [['/about', 'About'], ['/contact', 'Contact'], ['/faq', 'FAQ'], ['/privacy', 'Privacy Policy'], ['/terms', 'Terms of Service']] },

@@ -6,4 +6,6 @@
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+.rv { transition: opacity .6s cubic-bezier(.22,.8,.3,1), transform .6s cubic-bezier(.22,.8,.3,1); }
+.rv-hide { opacity: 0; transform: translateY(14px); }
 .rise { animation: rise .6s cubic-bezier(.22,.8,.3,1) backwards; animation-delay: calc(var(--i, 0) * 90ms); }

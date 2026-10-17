@@ -5,8 +5,8 @@ import { ButtonLink, container } from './ui';
 import { getSession } from '@/lib/auth/session';
 
 export const NAV = [
-  { href: '/jobs', label: 'Find Jobs' }, { href: '/placements', label: 'Student Placements' },
-  { href: '/cv-builder', label: 'CV Builder' }, { href: '/career-resources', label: 'Career Resources' },
+  { href: '/placements', label: 'SIWES & Internships' }, { href: '/cv-builder', label: 'CV Builder' },
+  { href: '/jobs', label: 'Find Jobs' }, { href: '/career-resources', label: 'Career Resources' },
   { href: '/employers', label: 'For Employers' },
 ];
 

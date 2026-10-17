@@ -6,7 +6,7 @@ import { SiteFooter } from '@/components/site-footer';
 
 export const metadata: Metadata = {
   metadataBase: new URL(brand.siteUrl),
-  title: { default: `${brand.name}: jobs, SIWES placements and CV builder`, template: `%s | ${brand.name}` },
+  title: { default: `${brand.name}: SIWES placements, internships and CV builder`, template: `%s | ${brand.name}` },
   description: brand.description,
   openGraph: { title: brand.name, description: brand.description, type: 'website' },
 };

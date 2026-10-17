@@ -38,3 +38,11 @@ Verified: model + assistant unit tests (contact data never sent, job text marked
 Bug caught by tests: a paragraph starting with 'Hello.' was deleted as if it were a greeting; fixed.
 Docs fix: the README migration range was stale (said 0001-0004); now 0001-0008.
 Not verified: real Gemini output quality, the editor in a browser, mobile layout.
+
+# Student-first landing page (added)
+Page order: hero (SIWES, internships, CV) -> three action cards -> SIWES/internship listings with a smaller "Looking for a job instead?" strip -> CV builder with a real preview -> how it works -> student checklist -> trust -> employer band -> FAQ -> closing call to action. Jobs remain in the navigation, search, listing strip and footer.
+Migration 0009: the entry-level filter also covers listings marked "no experience needed" (powers the "Entry-level jobs" option).
+Verified in a headless browser (tests/ui/landing.py, 68 checks, against a seeded database): no horizontal overflow at 320, 360, 375, 390, 430, 640, 768, 1024 and 1280px; both hero CTAs inside the first screen on phones; card layouts (1/2/3 columns); mobile menu open/close/Escape/navigation; hero search sends type, keyword and location; entry-level and SIWES searches return the right listings; FAQ and template switch work; all 31 internal links on the page resolve; reduced motion shows everything with no entrance animation; the page is fully visible with JavaScript off.
+Test-setup bugs found along the way (not app bugs): a non-JWT anon key made every query fail silently; hero-CTA check measured during smooth scrolling.
+Limits: sample CV text on phones is small (about 8 to 10px effective at 320 to 390px, a thumbnail, not full size). Google Fonts could not be loaded in the test sandbox, so the page was checked with the fallback font. The /employers and /career-resources pages are still "Coming soon" placeholders: the page's employer button therefore goes to employer sign-up, and the checklist is written inline instead of linking to articles that do not exist.
+Not verified: real devices, other browsers (only Chromium), real Supabase auth for signed-in variants of the page.

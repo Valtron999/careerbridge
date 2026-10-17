@@ -24,7 +24,7 @@ export async function searchOpportunities(p: SearchParams, forceKind?: 'job' | '
   const tsq = p.q ? buildTsQuery(p.q) : null;
   const args = {
     p_q: tsq, p_location: p.location ?? null, p_kind: kind ?? null, p_category_slugs: slugs ?? null, p_arrangement: p.arrangement ?? null,
-    p_experience: p.experience ?? null, p_paid: p.paid ?? null, p_duration: p.duration ?? null, p_verified: Boolean(p.verified), p_course: p.course ?? null,
+    p_experience: p.experience ?? (p.type === 'entry' ? 'entry' : null), p_paid: p.paid ?? null, p_duration: p.duration ?? null, p_verified: Boolean(p.verified), p_course: p.course ?? null,
     p_sort: p.sort ?? (tsq ? 'relevance' : 'newest'), p_limit: PAGE_SIZE, p_offset: (p.page - 1) * PAGE_SIZE,
   };
   if (p.q && !tsq) return { items: [], total: 0 }; // the keyword had no searchable characters

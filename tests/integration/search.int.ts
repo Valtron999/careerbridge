@@ -50,6 +50,11 @@ describe('search against a real database', () => {
     expect(slugs(await q({ type: 'graduate' }))).toEqual(['engineer-title']);
     expect((await q({ type: 'placement' })).total).toBe(3);
   });
+  it('entry-level jobs include listings that need no experience, and only jobs', async () => {
+    expect(slugs(await q({ type: 'entry' })).sort()).toEqual(['data-analyst', 'remote-support']);
+    expect(slugs(await q({ experience: 'entry' })).sort()).toEqual(['data-analyst', 'remote-support']);
+    expect(slugs(await q({ experience: 'none' }))).toEqual(['remote-support']);
+  });
   it('treats % and _ in locations literally', async () => { expect((await q({ location: '%' })).total).toBe(0); expect((await q({ location: '_' })).total).toBe(0); });
   it('filters by pay, duration and verified employer', async () => {
     expect(slugs(await q({ paid: 'unpaid' }))).toEqual(['swe-placement']);

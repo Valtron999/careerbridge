@@ -6,7 +6,7 @@ export const PAGE_SIZE = 12;
 
 export const searchSchema = z.object({
   q: str(120), location: str(80),
-  type: z.enum(['job', 'internship', 'placement', 'graduate', 'siwes', 'swep']).optional().catch(undefined),
+  type: z.enum(['job', 'internship', 'placement', 'graduate', 'siwes', 'swep', 'entry']).optional().catch(undefined),
   arrangement: z.enum(['onsite', 'hybrid', 'remote']).optional().catch(undefined),
   category: str(60),
   experience: z.enum(['none', 'entry', 'mid', 'senior', 'lead']).optional().catch(undefined),
@@ -21,7 +21,8 @@ export type SearchParams = z.infer<typeof searchSchema>;
 
 /** Maps the quick-category links on the landing page to category slugs / kinds. */
 export const TYPE_TO_CATEGORY: Record<string, { kind?: 'job' | 'placement'; slugs?: string[] }> = {
-  job: { kind: 'job' }, placement: { kind: 'placement' },
+  job: { kind: 'job' }, placement: { kind: 'placement' }, entry: { kind: 'job' }, // 'entry' also sets the experience filter (see searchOpportunities)
+ 
   internship: { slugs: ['internship'] }, graduate: { slugs: ['graduate-trainee'] },
   siwes: { slugs: ['siwes', 'industrial-training', 'industrial-attachment'] }, swep: { slugs: ['swep'] },
 };
