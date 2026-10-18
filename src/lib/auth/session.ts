@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
+import { roleHome } from './redirect';
 
 export type Profile = { id: string; role: 'candidate' | 'employer' | 'admin' | 'super_admin'; status: 'active' | 'suspended'; full_name: string | null; email: string | null; onboarding_completed: boolean };
 
@@ -27,5 +28,4 @@ export async function requireRole(roles: Profile['role'][], next: string) {
   if (!roles.includes(s.profile.role)) redirect(roleHome(s.profile.role));
   return s;
 }
-
-export function roleHome(role: Profile['role']): string { return role === 'employer' ? '/employer' : role === 'candidate' ? '/dashboard' : '/admin'; }
+export { roleHome };

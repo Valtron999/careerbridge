@@ -15,11 +15,11 @@ export function classifyGeminiError(http: number, bodyText: string, apiKey = '')
   if (http === 429) code = 'rate_limited';
   else if (http === 401 || http === 403 || /api key (not valid|expired)|api_key_invalid|leaked|permission_denied/.test(text)) code = 'provider_auth';
   else if (g?.status === 'FAILED_PRECONDITION' || /free tier is not available|location is not supported|enable billing|billing/.test(text)) code = 'provider_region';
-  else if (http === 404 || /no longer available|is not found|not supported for generatecontent|json mode is not enabled|developer instruction is not enabled|not enabled for models/.test(text)) code = 'provider_model';
+  else if (http === 404 || /no longer available|is not found|not supported for generatecontent|unexpected model name|json mode is not enabled|developer instruction is not enabled|not enabled for models/.test(text)) code = 'provider_model';
   else if (http >= 500) code = 'provider_error';
   let detail = `gemini ${http}${g?.status ? ` ${g.status}` : ''}${reason ? ` ${reason}` : ''}: ${message}`.replace(/\s+/g, ' ').slice(0, 300);
   if (apiKey) detail = detail.split(apiKey).join('[key]');
-  return { code, detail: detail.replace(/AIza[0-9A-Za-z_-]{20,}/g, '[key]') };
+  return { code, detail: detail.replace(/AIza[0-9A-Za-z_-]{20,}|AQ\.[0-9A-Za-z_-]{20,}/g, '[key]') };
 }
 
 export function createGeminiProvider(apiKey: string, model: string, fetchImpl: typeof fetch = fetch, baseUrl: string = process.env.AI_BASE_URL || DEFAULT_BASE): AiProvider {

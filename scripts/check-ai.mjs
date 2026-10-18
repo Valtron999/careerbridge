@@ -13,7 +13,7 @@ const provider = process.env.AI_PROVIDER ?? 'none', key = process.env.AI_API_KEY
 const mask = (k) => (k ? `${k.slice(0, 4)}…${k.slice(-2)} (${k.length} characters)` : '(missing)');
 const say = (icon, text) => console.log(`${icon} ${text}`);
 const problems = [];
-const safe = (s) => String(s).split(key || '\u0000').join('[key]').replace(/AIza[0-9A-Za-z_-]{20,}/g, '[key]');
+const safe = (s) => String(s).split(key || '\u0000').join('[key]').replace(/AIza[0-9A-Za-z_-]{20,}|AQ\.[0-9A-Za-z_-]{20,}/g, '[key]');
 
 console.log('\nCareerBridge AI check\n');
 say('•', `AI_PROVIDER = ${provider}`); say('•', `AI_MODEL    = ${model}${process.env.AI_MODEL ? '' : ' (default)'}`); say('•', `AI_API_KEY  = ${mask(key)}`);
@@ -23,7 +23,9 @@ if (provider !== 'gemini') problems.push('AI_PROVIDER is not "gemini", so the ap
 if (!key) problems.push('AI_API_KEY is empty. Create one at https://aistudio.google.com/apikey and put it in .env.local (or your host\'s environment settings).');
 if (/^["']|["']$/.test(key)) problems.push('The key has quote characters around it. In .env.local the quotes are removed for you, but many hosting dashboards keep them. Paste the key with no quotes.');
 if (/\s/.test(key)) problems.push('The key contains a space or line break. Paste it again without extra characters.');
-if (key && !key.startsWith('AIza')) problems.push('The key does not start with "AIza", which Google AI Studio keys normally do. Check you copied the whole key, and that it is not a key from another service.');
+const keyLooksOdd = Boolean(key) && !/^(AIza|AQ\.)/.test(key); // Google issues more than one key format, so this only matters if Google rejects the key
+const modelInvalid = !/^[A-Za-z0-9][A-Za-z0-9._-]{1,80}$/.test(model);
+if (modelInvalid) problems.push(`AI_MODEL is "${model}", which is not a model name. It looks like placeholder text copied from instructions. Replace it with a real name such as gemini-flash-latest (no angle brackets or spaces), then restart the app.`);
 if (/gemma/i.test(model)) problems.push('You are using a Gemma model. Gemma models do not support JSON mode or system instructions, which this app needs. Choose a Gemini model.');
 if (/^gemini-(1\.|2\.0|2\.5)/.test(model)) problems.push(`"${model}" is an older model. Google has retired the 1.x and 2.0 models and scheduled the 2.5 models for shutdown on 16 October 2026, so it may return 404. Pick a current model from the list below, or use gemini-flash-latest.`);
 if (!key) { report(); }
@@ -48,6 +50,7 @@ try {
     models = (j.models ?? []).filter((m) => (m.supportedGenerationMethods ?? []).includes('generateContent')).map((m) => m.name.replace(/^models\//, ''));
     say('✔', `Key accepted. ${models.length} models can generate content.`);
   } else {
+    if (keyLooksOdd) problems.push('The key does not start with "AIza" or "AQ.", the formats Google normally uses. Check you copied the whole key and that it is not from another service.');
     const msg = safe(j.error?.message ?? text.slice(0, 200)); say('✘', `Google answered ${r.status} ${j.error?.status ?? ''}: ${msg}`);
     if (/api key (not valid|expired)|API_KEY_INVALID/i.test(msg + (j.error?.details ?? []).map((d) => d.reason).join())) problems.push('Google says the API key is not valid. Create a new key at https://aistudio.google.com/apikey and replace AI_API_KEY (then restart the app).');
     else if (/free tier is not available|location is not supported|billing/i.test(msg) || j.error?.status === 'FAILED_PRECONDITION') problems.push('Google says the free tier is not available where this request comes from (it depends on the region of the server making the call, not your own location). Enable billing for the project in Google AI Studio, or run the app from a supported region.');
@@ -58,11 +61,13 @@ try {
 if (models.length) {
   const picks = models.filter((m) => /^gemini-.*(flash|pro)/.test(m) && !/(image|tts|audio|live|embedding|computer|robotics|lyria|veo)/.test(m)).slice(0, 14);
   say('•', `Models your key can use (first ${picks.length}): ${picks.join(', ')}`);
-  if (models.includes(model)) say('✔', `Your model "${model}" is available to this key.`);
+  if (modelInvalid) { /* explained above */ }
+  else if (models.includes(model)) say('✔', `Your model "${model}" is available to this key.`);
   else if (model === 'gemini-flash-latest' && models.some((m) => m === 'gemini-flash-latest')) say('✔', 'gemini-flash-latest is available.');
   else { say('✘', `Your model "${model}" is not in that list.`); problems.push(`The model "${model}" is not available to your key. Set AI_MODEL to one of the names listed above.`); }
 }
 
+if (modelInvalid) { console.log('\nSkipping the request tests: fix the model name first.'); report(); }
 // 3. The exact request shape the app sends, then each feature on its own
 console.log('\nStep 2: the request exactly as the app sends it');
 const app = await call('app', { systemInstruction: { parts: [{ text: 'You answer with JSON only.' }] }, contents: [user], generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 200 } });

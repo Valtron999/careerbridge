@@ -1,5 +1,5 @@
 # Status (verified commands)
-- `tsc --noEmit`: clean. `vitest`: 89 passed. `tests/rls_harness.py`: 131 passed (SQL harness); integration: 34 passed, 0 failed (embedded Postgres, stubbed Supabase schemas).
+- `tsc --noEmit`: clean. `vitest`: 98 passed. `tests/rls_harness.py`: 131 passed (SQL harness); integration: 34 passed, 0 failed (embedded Postgres, stubbed Supabase schemas).
 - `next build`: compiles (Google Fonts download is skipped offline; fonts load from Google in the browser).
 - Not run: live Supabase project, Vercel deploy, browser/E2E tests, accessibility audit, responsive review of the Next.js pages.
 
@@ -52,3 +52,9 @@ Report: `cv ai failed provider_rejected gemini status 400`. The app hid Google's
 Changes: errors are now classified (provider_auth / provider_region / provider_model / provider_rejected) and the log shows Google's status and reason, never the key or CV text; `npm run ai:check` diagnoses a real setup; default model is now `gemini-flash-latest` because gemini-2.5-flash was scheduled for shutdown on 16 Oct 2026.
 Verified: 13 classification cases and key redaction (unit tests); the check script against a mock Google for good key, invalid key, region/billing, retired model, Gemma, quoted key and missing key.
 Not verified: the real cause on the reporter's machine (needs their `npm run ai:check` output), anything against the real Google API.
+
+# Employer and admin entry points (added)
+Reported: no employer business login and no way to find the admin panel. Both existed but nothing led to them: /employers was a "Coming soon" page, sign-in was one shared page that always sent people to the student dashboard, and there was no way to create an admin.
+Changes: real /employers page; employer and admin variants of the sign-in page; role-aware redirect after sign-in (an employer lands on /employer, nobody is sent into an area their role cannot open); employer sign-in/sign-up and staff links in the footer; `npm run make-admin -- email`.
+Verified: redirect rules (unit tests); the admin command against a real database stack (promotes an account, refuses unknown/invalid emails and missing keys, and a normal user's key cannot promote anyone); 29 browser checks (pages, headings, links, overflow at 320/390/768/1280px, signed-out /admin goes to sign-in, open redirects ignored).
+Not verified: real sign-in and email confirmation (needs a live Supabase project), so the redirect after an actual login has only been unit-tested.

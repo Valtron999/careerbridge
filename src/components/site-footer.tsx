@@ -6,7 +6,7 @@ import { container } from './ui';
 const groups = [
   { title: 'Explore', links: [['/placements?category=siwes', 'SIWES & Industrial Training'], ['/jobs?type=internship', 'Internships'], ['/jobs?type=entry', 'Entry-level Jobs'], ['/jobs', 'Find Jobs'], ['/jobs?arrangement=remote', 'Remote Opportunities']] },
   { title: 'Career Tools', links: [['/cv-builder', 'CV Builder'], ['/dashboard/cover-letters', 'Cover Letter Generator'], ['/career-resources', 'Career Resources']] },
-  { title: 'Employers', links: [['/employer/opportunities/new', 'Post an Opportunity'], ['/employer', 'Employer Dashboard'], ['/pricing', 'Pricing'], ['/employer-guidelines', 'Employer Guidelines']] },
+  { title: 'Employers', links: [['/employers', 'For Employers'], ['/auth/login?type=employer', 'Employer Sign In'], ['/auth/signup?type=employer', 'Create Employer Account'], ['/pricing', 'Pricing'], ['/employer-guidelines', 'Employer Guidelines']] },
   { title: 'Company', links: [['/about', 'About'], ['/contact', 'Contact'], ['/faq', 'FAQ'], ['/privacy', 'Privacy Policy'], ['/terms', 'Terms of Service']] },
 ] as const;
 
@@ -19,7 +19,7 @@ export function SiteFooter() {
           {groups.map((g) => (<div key={g.title}><h3 className="mb-3 text-sm font-semibold">{g.title}</h3>
             {g.links.map(([href, label]) => (<Link key={href} href={href} className="block py-1 text-sm text-ink-muted hover:text-brand">{label}</Link>))}</div>))}
         </div>
-        <p className="mt-9 border-t border-surface-line pt-5 text-sm text-ink-muted">© {new Date().getFullYear()} {brand.name}. All rights reserved.</p>
+        <div className="mt-9 flex flex-wrap items-center justify-between gap-3 border-t border-surface-line pt-5 text-sm text-ink-muted"><p>© {new Date().getFullYear()} {brand.name}. All rights reserved.</p><Link href="/admin" className="hover:text-brand">Staff sign in</Link></div>
       </div>
     </footer>
   );

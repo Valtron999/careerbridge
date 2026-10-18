@@ -16,7 +16,7 @@ npm install
 cp .env.example .env.local        # fill in Supabase values
 npm run dev
 ```
-0. (Optional AI) Get a free Gemini key at https://aistudio.google.com/apikey, then set `AI_PROVIDER=gemini`, `AI_API_KEY=...`, `AI_MODEL=<a current free-tier model>`. Without these the AI buttons show a clear "not set up" message and the rest of the builder works.
+0. (Optional AI) Get a free Gemini key at https://aistudio.google.com/apikey, then set `AI_PROVIDER=gemini`, `AI_API_KEY=...`, `AI_MODEL=gemini-flash-latest` (type it exactly, with no angle brackets; any model name from `npm run ai:check` also works). Without these the AI buttons show a clear "not set up" message and the rest of the builder works.
 1. Create a Supabase project. Put the URL and anon key in `.env.local`; put the service-role key in `SUPABASE_SERVICE_ROLE_KEY` (server only).
 2. Apply **all** migrations in order, `supabase/migrations/0001` to `0009` (`supabase db push`, or paste each into the SQL editor). The app will not work with only some of them:
    - 0001 schema, 0002 security rules and application functions, 0003 reference data, 0004 employer and admin functions,
@@ -24,6 +24,19 @@ npm run dev
 3. Auth > URL configuration: set Site URL and add `<site>/auth/callback` as a redirect URL. Keep "Confirm email" ON.
 4. Make the first admin by SQL (admins can never be created from the app): `update profiles set role='admin' where email='you@example.com';`
 5. Deploy: import the repo in Vercel, add the same environment variables, deploy.
+
+## Employer and admin access
+**Employers** start at `/employers` (also "For Employers" in the menu and "Employer Sign In" in the footer).
+1. "Create employer account" (`/auth/signup?type=employer`), then confirm the email. You land on `/employer/onboarding`.
+2. Later, sign in at `/auth/login?type=employer`. Employers always land on `/employer`, never on the student dashboard.
+3. An email address can only have one account type, so use a work email that has not been used as a student account.
+Employer tools: organisation profile, listings (reviewed before they go live), applicants, interviews, verification. Not built yet: team members, paid plans, analytics.
+
+**Admins** cannot be created from the website. This is deliberate.
+1. Sign up normally with the admin's email and confirm it.
+2. Put `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (Supabase > Project Settings > API) in `.env.local`, then run `npm run make-admin -- you@example.com`. Or run this in the Supabase SQL editor: `update profiles set role = 'admin' where email = 'you@example.com';`
+3. Sign in. Admins land on `/admin`, there is a Dashboard button in the header, and "Staff sign in" is in the footer.
+Admin screens: overview, listing review, verification requests, reports, audit log. Not built yet: user management, category settings, payments. Every admin page checks the role on the server, so knowing the address is not enough.
 
 ## Environment variables
 Public: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.

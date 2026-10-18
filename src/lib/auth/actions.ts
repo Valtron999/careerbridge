@@ -5,6 +5,7 @@ import { supabaseConfigured } from '@/lib/env';
 import { brand } from '@/lib/config/brand';
 import { forgotSchema, loginSchema, signupSchema, updatePasswordSchema } from '@/lib/validation/auth';
 import { safeNextPath } from '@/lib/validation/safe-url';
+import { destinationAfterLogin, type Role } from './redirect';
 
 export type FormState = { error?: string; fieldErrors?: Record<string, string>; message?: string };
 const NOT_CONFIGURED: FormState = { error: 'The service is not configured yet. Add the Supabase environment variables (see README).' };
@@ -41,9 +42,10 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
     if (error?.message.toLowerCase().includes('not confirmed')) return { error: 'Verify your email first. Check your inbox for the link.' };
     return { error: 'Incorrect email or password.' };
   }
-  const { data: profile } = await supabase.from('profiles').select('status').eq('id', data.user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('status, role').eq('id', data.user.id).single();
   if (profile?.status === 'suspended') { await supabase.auth.signOut(); return { error: 'This account has been suspended. Contact support if you think this is a mistake.' }; }
-  redirect(safeNextPath(String(form.get('next') ?? '')));
+  const wanted = safeNextPath(String(form.get('next') ?? ''), '');
+  redirect(destinationAfterLogin(wanted || null, (profile?.role ?? 'candidate') as Role)); // an employer never lands on the candidate dashboard, and nobody is sent into an area their role cannot open
 }
 
 export async function requestPasswordReset(_: FormState, form: FormData): Promise<FormState> {

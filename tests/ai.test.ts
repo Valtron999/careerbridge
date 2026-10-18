@@ -64,6 +64,7 @@ describe('gemini error diagnosis', () => {
     ['a leaked key', 403, body(403, 'PERMISSION_DENIED', 'Your API key was reported as leaked. Please use another API key.'), 'provider_auth'],
     ['free tier not available in the region', 400, body(400, 'FAILED_PRECONDITION', 'Gemini API free tier is not available in your country. Please enable billing on your project in Google AI Studio.'), 'provider_region'],
     ['an unsupported location', 400, body(400, 'FAILED_PRECONDITION', 'User location is not supported for the API use.'), 'provider_region'],
+    ['a placeholder instead of a model name (the exact message Google sent)', 400, body(400, 'INVALID_ARGUMENT', '* GenerateContentRequest.model: unexpected model name format\n'), 'provider_model'],
     ['a retired model', 404, body(404, 'NOT_FOUND', 'This model models/gemini-2.5-flash is no longer available.'), 'provider_model'],
     ['an unknown model', 404, body(404, 'NOT_FOUND', 'models/nope is not found for API version v1beta, or is not supported for generateContent.'), 'provider_model'],
     ['a model without JSON mode', 400, body(400, 'INVALID_ARGUMENT', 'JSON mode is not enabled for models/gemma-3-27b-it'), 'provider_model'],
@@ -83,6 +84,10 @@ describe('gemini error diagnosis', () => {
     const d = classifyGeminiError(400, body(400, 'INVALID_ARGUMENT', `Bad key ${key} supplied`), key).detail; expect(d).not.toContain(key); expect(d).toContain('[key]');
     expect(classifyGeminiError(400, body(400, 'INVALID_ARGUMENT', `Bad key ${key}`)).detail).not.toContain(key); // pattern-based redaction when the key is unknown
   });
+  it('also redacts keys in the newer AQ. format', () => {
+    const key = ['AQ', '.A', 'b8NOTAREAL', 'KEYNOTAREAL', 'KEY1234567'].join('');
+    expect(classifyGeminiError(400, body(400, 'INVALID_ARGUMENT', `Bad key ${key}`)).detail).not.toContain(key);
+  });
   it('truncates long error bodies', () => { expect(classifyGeminiError(400, 'x'.repeat(5000)).detail.length).toBeLessThanOrEqual(300); });
   it('surfaces the classification through the provider', async () => {
     const mk = (status: number, b: string) => createGeminiProvider('KEY', 'm', (async () => new Response(b, { status })) as typeof fetch).generateJson({ system: '', user: 'my private cv text' });
@@ -90,5 +95,22 @@ describe('gemini error diagnosis', () => {
     await expect(mk(404, body(404, 'NOT_FOUND', 'This model models/x is no longer available.'))).rejects.toMatchObject({ code: 'provider_model', message: expect.stringContaining('no longer available') });
     const err = await mk(400, body(400, 'FAILED_PRECONDITION', 'free tier is not available in your country')).catch((e) => e);
     expect(err.code).toBe('provider_region'); expect(err.message).not.toContain('my private cv text');
+  });
+});
+
+describe('provider selection', () => {
+  const saved = { ...process.env };
+  const setEnv = (e: Record<string, string>) => { process.env = { ...saved, AI_PROVIDER: 'gemini', AI_API_KEY: 'k', ...e }; };
+  it('rejects a placeholder model name with a message that says what to fix', async () => {
+    const { getAiProvider } = await import('../src/lib/ai');
+    setEnv({ AI_MODEL: '<a current free-tier model>' });
+    expect(() => getAiProvider()).toThrowError(/not a valid model name/); try { getAiProvider(); } catch (e) { expect((e as { code: string }).code).toBe('provider_model'); }
+    for (const bad of ['gemini flash', 'models/gemini', '..', 'x']) { setEnv({ AI_MODEL: bad }); expect(() => getAiProvider()).toThrow(); }
+    process.env = saved;
+  });
+  it('accepts real model names and the default', async () => {
+    const { getAiProvider } = await import('../src/lib/ai');
+    for (const ok of ['gemini-flash-latest', 'gemini-3.5-flash', 'gemini-2.5-flash-lite']) { setEnv({ AI_MODEL: ok }); expect(getAiProvider().name).toBe('gemini'); }
+    setEnv({ AI_MODEL: '' }); expect(getAiProvider().name).toBe('gemini'); process.env = saved;
   });
 });

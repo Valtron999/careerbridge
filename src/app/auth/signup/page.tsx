@@ -8,8 +8,8 @@ export const metadata: Metadata = { title: 'Create your account' };
 export default function SignupPage({ searchParams }: { searchParams: { type?: string } }) {
   const employer = searchParams.type === 'employer';
   return (
-    <AuthShell title="Create your account" subtitle="Free for job seekers and students."
-      footer={<>Already registered? <Link className="font-semibold text-brand" href="/auth/login">Sign in</Link></>}>
+    <AuthShell title={employer ? 'Create an employer account' : 'Create your account'} subtitle={employer ? 'For companies, schools, NGOs and other organisations that want to hire or host students.' : 'Free for job seekers and students.'}
+      footer={<>Already registered? <Link className="font-semibold text-brand" href={employer ? '/auth/login?type=employer' : '/auth/login'}>Sign in</Link></>}>
       <AuthForm action={signUp} submitLabel="Create account"
         fields={[{ name: 'full_name', label: 'Full name', autoComplete: 'name' }, { name: 'email', label: 'Email', type: 'email', autoComplete: 'email' },
           { name: 'password', label: 'Password', type: 'password', autoComplete: 'new-password', hint: 'At least 8 characters.' }]}>
