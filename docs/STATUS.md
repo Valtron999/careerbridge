@@ -1,5 +1,5 @@
 # Status (verified commands)
-- `tsc --noEmit`: clean. `vitest`: 72 passed. `tests/rls_harness.py`: 131 passed (SQL harness); integration: 34 passed, 0 failed (embedded Postgres, stubbed Supabase schemas).
+- `tsc --noEmit`: clean. `vitest`: 89 passed. `tests/rls_harness.py`: 131 passed (SQL harness); integration: 34 passed, 0 failed (embedded Postgres, stubbed Supabase schemas).
 - `next build`: compiles (Google Fonts download is skipped offline; fonts load from Google in the browser).
 - Not run: live Supabase project, Vercel deploy, browser/E2E tests, accessibility audit, responsive review of the Next.js pages.
 
@@ -46,3 +46,9 @@ Verified in a headless browser (tests/ui/landing.py, 68 checks, against a seeded
 Test-setup bugs found along the way (not app bugs): a non-JWT anon key made every query fail silently; hero-CTA check measured during smooth scrolling.
 Limits: sample CV text on phones is small (about 8 to 10px effective at 320 to 390px, a thumbnail, not full size). Google Fonts could not be loaded in the test sandbox, so the page was checked with the fallback font. The /employers and /career-resources pages are still "Coming soon" placeholders: the page's employer button therefore goes to employer sign-up, and the checklist is written inline instead of linking to articles that do not exist.
 Not verified: real devices, other browsers (only Chromium), real Supabase auth for signed-in variants of the page.
+
+# Gemini 400 diagnosis (added)
+Report: `cv ai failed provider_rejected gemini status 400`. The app hid Google's reason, so the cause could not be read from the log. Google documents HTTP 400 for: invalid API key, free tier unavailable in the region without billing, and malformed requests (which includes models that reject JSON mode or system instructions).
+Changes: errors are now classified (provider_auth / provider_region / provider_model / provider_rejected) and the log shows Google's status and reason, never the key or CV text; `npm run ai:check` diagnoses a real setup; default model is now `gemini-flash-latest` because gemini-2.5-flash was scheduled for shutdown on 16 Oct 2026.
+Verified: 13 classification cases and key redaction (unit tests); the check script against a mock Google for good key, invalid key, region/billing, retired model, Gemma, quoted key and missing key.
+Not verified: the real cause on the reporter's machine (needs their `npm run ai:check` output), anything against the real Google API.

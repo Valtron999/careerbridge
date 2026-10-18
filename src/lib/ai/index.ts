@@ -5,7 +5,7 @@ import { createGeminiProvider } from './gemini';
 export function getAiProvider(): AiProvider {
   const kind = (process.env.AI_PROVIDER ?? 'none').toLowerCase();
   const key = process.env.AI_API_KEY;
-  if (kind === 'gemini' && key) return createGeminiProvider(key, process.env.AI_MODEL || 'gemini-2.5-flash');
+  if (kind === 'gemini' && key) return createGeminiProvider(key, process.env.AI_MODEL || 'gemini-flash-latest');
   throw new AiError('not_configured');
 }
 export function aiConfigured(): boolean { return (process.env.AI_PROVIDER ?? 'none') !== 'none' && Boolean(process.env.AI_API_KEY); }

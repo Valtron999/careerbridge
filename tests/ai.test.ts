@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createGeminiProvider } from '../src/lib/ai/gemini';
+import { classifyGeminiError, createGeminiProvider } from '../src/lib/ai/gemini';
 import { runCvAssist, unsupportedNumbers } from '../src/lib/ai/cv-assist';
 import { AiError, type AiProvider } from '../src/lib/ai/types';
 import { emptyCv } from '../src/lib/cv/schema';
@@ -21,7 +21,7 @@ describe('gemini provider', () => {
   it('maps errors without leaking details', async () => {
     const mk = (status: number) => createGeminiProvider('k', 'm', (async () => new Response('secret body', { status })) as typeof fetch).generateJson({ system: '', user: '' });
     await expect(mk(429)).rejects.toMatchObject({ code: 'rate_limited' });
-    await expect(mk(403)).rejects.toMatchObject({ code: 'provider_rejected' });
+    await expect(mk(403)).rejects.toMatchObject({ code: 'provider_auth' });
     await expect(mk(503)).rejects.toMatchObject({ code: 'provider_error' });
   });
   it('treats empty or blocked replies as bad output', async () => {
@@ -54,4 +54,41 @@ describe('cv assistant', () => {
     const t = r.result as { bullet_edits: { before: string }[] }; expect(t.bullet_edits).toHaveLength(1); expect(t.bullet_edits[0]!.before).toBe('Answered user questions');
   });
   it('number check helper', () => expect(unsupportedNumbers('grew 20% in 2025', 'since 2025')).toEqual(['20%']));
+});
+
+describe('gemini error diagnosis', () => {
+  const body = (code: number, status: string, message: string, reason?: string) => JSON.stringify({ error: { code, message, status, ...(reason ? { details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason }] } : {}) } });
+  const cases: [string, number, string, string][] = [
+    ['an invalid API key (Google reports this as a 400)', 400, body(400, 'INVALID_ARGUMENT', 'API key not valid. Please pass a valid API key.', 'API_KEY_INVALID'), 'provider_auth'],
+    ['an expired key', 400, body(400, 'INVALID_ARGUMENT', 'API key expired. Please renew the API key.', 'API_KEY_INVALID'), 'provider_auth'],
+    ['a leaked key', 403, body(403, 'PERMISSION_DENIED', 'Your API key was reported as leaked. Please use another API key.'), 'provider_auth'],
+    ['free tier not available in the region', 400, body(400, 'FAILED_PRECONDITION', 'Gemini API free tier is not available in your country. Please enable billing on your project in Google AI Studio.'), 'provider_region'],
+    ['an unsupported location', 400, body(400, 'FAILED_PRECONDITION', 'User location is not supported for the API use.'), 'provider_region'],
+    ['a retired model', 404, body(404, 'NOT_FOUND', 'This model models/gemini-2.5-flash is no longer available.'), 'provider_model'],
+    ['an unknown model', 404, body(404, 'NOT_FOUND', 'models/nope is not found for API version v1beta, or is not supported for generateContent.'), 'provider_model'],
+    ['a model without JSON mode', 400, body(400, 'INVALID_ARGUMENT', 'JSON mode is not enabled for models/gemma-3-27b-it'), 'provider_model'],
+    ['a model without system instructions', 400, body(400, 'INVALID_ARGUMENT', 'Developer instruction is not enabled for models/gemma-3-27b-it'), 'provider_model'],
+    ['a genuinely malformed request', 400, body(400, 'INVALID_ARGUMENT', 'Invalid JSON payload received. Unknown name "foo": Cannot find field.'), 'provider_rejected'],
+    ['rate limiting', 429, body(429, 'RESOURCE_EXHAUSTED', 'You exceeded your current quota.'), 'rate_limited'],
+    ['a server error', 500, body(500, 'INTERNAL', 'An internal error has occurred.'), 'provider_error'],
+    ['a non-JSON error page', 502, '<html>Bad gateway</html>', 'provider_error'],
+  ];
+  for (const [name, http, text, code] of cases) it(`recognises ${name}`, () => { expect(classifyGeminiError(http, text).code).toBe(code); });
+  it('keeps the useful reason in the log line', () => {
+    const d = classifyGeminiError(400, body(400, 'INVALID_ARGUMENT', 'API key not valid. Please pass a valid API key.', 'API_KEY_INVALID')).detail;
+    expect(d).toContain('400'); expect(d).toContain('INVALID_ARGUMENT'); expect(d).toContain('API_KEY_INVALID'); expect(d).toContain('API key not valid');
+  });
+  it('never puts the key in the log line, even if Google echoes it', () => {
+    const key = ['AIza', 'SyNOTAREAL', 'KEYNOTAREALKEY', 'NOTAREALKEY12345'].join(''); // assembled at runtime so no key-shaped text sits in the source
+    const d = classifyGeminiError(400, body(400, 'INVALID_ARGUMENT', `Bad key ${key} supplied`), key).detail; expect(d).not.toContain(key); expect(d).toContain('[key]');
+    expect(classifyGeminiError(400, body(400, 'INVALID_ARGUMENT', `Bad key ${key}`)).detail).not.toContain(key); // pattern-based redaction when the key is unknown
+  });
+  it('truncates long error bodies', () => { expect(classifyGeminiError(400, 'x'.repeat(5000)).detail.length).toBeLessThanOrEqual(300); });
+  it('surfaces the classification through the provider', async () => {
+    const mk = (status: number, b: string) => createGeminiProvider('KEY', 'm', (async () => new Response(b, { status })) as typeof fetch).generateJson({ system: '', user: 'my private cv text' });
+    await expect(mk(400, body(400, 'INVALID_ARGUMENT', 'API key not valid. Please pass a valid API key.', 'API_KEY_INVALID'))).rejects.toMatchObject({ code: 'provider_auth' });
+    await expect(mk(404, body(404, 'NOT_FOUND', 'This model models/x is no longer available.'))).rejects.toMatchObject({ code: 'provider_model', message: expect.stringContaining('no longer available') });
+    const err = await mk(400, body(400, 'FAILED_PRECONDITION', 'free tier is not available in your country')).catch((e) => e);
+    expect(err.code).toBe('provider_region'); expect(err.message).not.toContain('my private cv text');
+  });
 });

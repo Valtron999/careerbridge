@@ -1,4 +1,4 @@
-export type AiErrorCode = 'not_configured' | 'rate_limited' | 'provider_rejected' | 'provider_error' | 'bad_output' | 'timeout';
+export type AiErrorCode = 'not_configured' | 'rate_limited' | 'provider_auth' | 'provider_region' | 'provider_model' | 'provider_rejected' | 'provider_error' | 'bad_output' | 'timeout';
 export class AiError extends Error { constructor(public code: AiErrorCode, message?: string) { super(message ?? code); } }
 
 export type GenerateRequest = { system: string; user: string; maxOutputTokens?: number };
